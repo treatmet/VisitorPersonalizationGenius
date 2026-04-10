@@ -7,8 +7,8 @@ export function insertSignalLog(log: VisitorSignalLog): void {
     INSERT INTO visitor_signal_logs
       (id, visitor_id, request_id, captured_at, page_path, page_type, referrer,
        utm_source, utm_medium, utm_campaign, utm_content, utm_term, gclid,
-       user_agent, accept_language, ip, lifecycle_stage_hint, raw_payload_json)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       user_agent, accept_language, ip, lifecycle_stage_hint, signals_json, raw_payload_json)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     log.id,
     log.visitor_id,
@@ -27,6 +27,7 @@ export function insertSignalLog(log: VisitorSignalLog): void {
     log.accept_language,
     log.ip,
     log.lifecycle_stage_hint,
+    log.signals_json,
     log.raw_payload_json,
   );
 }

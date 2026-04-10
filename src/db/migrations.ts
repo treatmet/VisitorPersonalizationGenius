@@ -48,6 +48,7 @@ export function runMigrations(): void {
       accept_language TEXT,
       ip TEXT,
       lifecycle_stage_hint TEXT,
+      signals_json TEXT,
       raw_payload_json TEXT NOT NULL,
       FOREIGN KEY (visitor_id) REFERENCES visitors(id)
     );

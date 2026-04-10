@@ -12,7 +12,7 @@ export function handleDecide(req: Request, res: Response): void {
     // Bot check — return safe default
     const userAgent = req.headers['user-agent'];
     if (isBot(userAgent)) {
-      res.status(200).json(buildBotFallback());
+      res.status(200).json(buildFallbackResponse());
       return;
     }
 
@@ -40,35 +40,11 @@ export function handleDecide(req: Request, res: Response): void {
   } catch (err) {
     // On any failure, return a safe default experience so the page still loads
     logger.error('Decide endpoint error, returning fallback', err);
-    res.status(200).json(buildErrorFallback());
+    res.status(200).json(buildFallbackResponse());
   }
 }
 
-function buildBotFallback() {
-  const defaultContent = getDefaultContent();
-  const segmentWeights: Record<string, number> = {};
-  for (const seg of VALID_SEGMENTS) {
-    segmentWeights[seg] = 0;
-  }
-  return {
-    visitorId: null,
-    lifecycleStage: 'anonymous',
-    primarySegment: 'unknown',
-    subSegment: null,
-    segmentWeights,
-    experience: {
-      templateKey: getDefaultTemplateKey(),
-      hero: defaultContent.hero,
-      theme: defaultContent.theme,
-    },
-    metadata: {
-      fallbackUsed: true,
-      rulesetVersion: getRulesetVersion(),
-    },
-  };
-}
-
-function buildErrorFallback() {
+function buildFallbackResponse() {
   const defaultContent = getDefaultContent();
   const segmentWeights: Record<string, number> = {};
   for (const seg of VALID_SEGMENTS) {

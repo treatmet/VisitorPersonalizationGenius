@@ -9,6 +9,8 @@ import { logger } from '../utils/logger';
 export interface CaptureInput {
   requestId: string;
   page: CaptureRequest['page'];
+  signupgeniusUserId?: string;
+  signals?: Record<string, string>;
   context?: CaptureRequest['context'];
   userAgent?: string;
   acceptLanguage?: string;
@@ -83,6 +85,7 @@ export function captureVisitor(visitorId: string | null, input: CaptureInput): C
     accept_language: input.acceptLanguage || null,
     ip: input.ip || null,
     lifecycle_stage_hint: input.context?.lifecycleStageHint || null,
+    signals_json: input.signals ? JSON.stringify(input.signals) : null,
     raw_payload_json: JSON.stringify(input),
   };
   signalLogRepo.insertSignalLog(signalLog);
@@ -96,6 +99,13 @@ export function captureVisitor(visitorId: string | null, input: CaptureInput): C
   if (input.page.query?.utm_campaign) signalFields.utm_campaign = input.page.query.utm_campaign;
   if (input.page.query?.utm_content) signalFields.utm_content = input.page.query.utm_content;
   if (input.page.query?.utm_term) signalFields.utm_term = input.page.query.utm_term;
+
+  // Include any custom signals (e.g. signup_category, template_selected)
+  if (input.signals) {
+    for (const [key, value] of Object.entries(input.signals)) {
+      if (value) signalFields[key] = value;
+    }
+  }
 
   const newWeights = evaluateSegmentRules(signalFields);
 
@@ -138,6 +148,7 @@ export function captureVisitor(visitorId: string | null, input: CaptureInput): C
 
   // Update visitor record
   visitorRepo.updateVisitor(visitorId, {
+    signupgenius_user_id: input.signupgeniusUserId || null,
     lifecycle_stage: lifecycleStage,
     primary_segment: primarySegment,
     sub_segment: null,

@@ -10,15 +10,20 @@ const cfg = config as PersonalizationConfig;
  */
 export function evaluateSegmentRules(fields: Record<string, string>): Record<string, number> {
   const weights: Record<string, number> = {};
+  const matched = new Set<string>(); // tracks "field:segment" pairs already matched
 
   for (const rule of cfg.segmentRules) {
     const fieldValue = fields[rule.field];
     if (!fieldValue) continue;
 
+    // A given field can only contribute to a segment once (first match wins)
+    const key = `${rule.field}:${rule.segment}`;
+    if (matched.has(key)) continue;
+
     const match = matchRule(rule, fieldValue);
     if (match) {
-      // Accumulate weights per segment from all matching rules
       weights[rule.segment] = (weights[rule.segment] || 0) + rule.weight;
+      matched.add(key);
     }
   }
 

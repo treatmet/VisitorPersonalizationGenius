@@ -30,6 +30,8 @@ export function handleCapture(req: Request, res: Response): void {
     const result = captureVisitor(visitorId, {
       requestId: data.requestId,
       page: data.page,
+      signupgeniusUserId: data.signupgeniusUserId,
+      signals: data.signals,
       context: data.context,
       userAgent: userAgent,
       acceptLanguage: req.headers['accept-language'],

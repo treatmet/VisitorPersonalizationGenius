@@ -38,6 +38,7 @@ export interface VisitorSignalLog {
   accept_language: string | null;
   ip: string | null;
   lifecycle_stage_hint: string | null;
+  signals_json: string | null;
   raw_payload_json: string;
 }
 

@@ -21,6 +21,8 @@ export interface CaptureRequest {
       gclid?: string;
     };
   };
+  signupgeniusUserId?: string;
+  signals?: Record<string, string>;
   context?: {
     lifecycleStageHint?: LifecycleStage;
   };

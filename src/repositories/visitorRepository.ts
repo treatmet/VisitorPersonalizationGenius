@@ -25,13 +25,20 @@ export function insertVisitor(visitor: Visitor): void {
 
 export function updateVisitor(
   id: string,
-  fields: { lifecycle_stage: string; primary_segment: string; sub_segment: string | null; confidence: number; last_seen_at: string },
+  fields: { signupgenius_user_id?: string | null; lifecycle_stage: string; primary_segment: string; sub_segment: string | null; confidence: number; last_seen_at: string },
 ): void {
   const db = getDb();
-  db.prepare(`
-    UPDATE visitors SET lifecycle_stage = ?, primary_segment = ?, sub_segment = ?, confidence = ?, last_seen_at = ?
-    WHERE id = ?
-  `).run(fields.lifecycle_stage, fields.primary_segment, fields.sub_segment, fields.confidence, fields.last_seen_at, id);
+  if (fields.signupgenius_user_id) {
+    db.prepare(`
+      UPDATE visitors SET signupgenius_user_id = ?, lifecycle_stage = ?, primary_segment = ?, sub_segment = ?, confidence = ?, last_seen_at = ?
+      WHERE id = ?
+    `).run(fields.signupgenius_user_id, fields.lifecycle_stage, fields.primary_segment, fields.sub_segment, fields.confidence, fields.last_seen_at, id);
+  } else {
+    db.prepare(`
+      UPDATE visitors SET lifecycle_stage = ?, primary_segment = ?, sub_segment = ?, confidence = ?, last_seen_at = ?
+      WHERE id = ?
+    `).run(fields.lifecycle_stage, fields.primary_segment, fields.sub_segment, fields.confidence, fields.last_seen_at, id);
+  }
 }
 
 export function getSegmentWeights(visitorId: string): VisitorSegmentWeight[] {

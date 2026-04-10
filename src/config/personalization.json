@@ -14,14 +14,21 @@
     { "field": "utm_term", "operator": "contains", "value": "volunteer", "segment": "nonprofit", "weight": 3 },
     { "field": "utm_term", "operator": "contains", "value": "sports", "segment": "sports", "weight": 4 },
     { "field": "path", "operator": "contains", "value": "/school", "segment": "school", "weight": 3 },
-    { "field": "path", "operator": "contains", "value": "/church", "segment": "church", "weight": 3 },
-    { "field": "path", "operator": "contains", "value": "/nonprofit", "segment": "nonprofit", "weight": 3 },
-    { "field": "path", "operator": "contains", "value": "/sports", "segment": "sports", "weight": 3 },
-    { "field": "path", "operator": "contains", "value": "/business", "segment": "business", "weight": 3 },
     { "field": "referrer", "operator": "contains", "value": "school", "segment": "school", "weight": 2 },
     { "field": "referrer", "operator": "contains", "value": "church", "segment": "church", "weight": 2 },
     { "field": "utm_source", "operator": "equals", "value": "school_newsletter", "segment": "school", "weight": 5 },
-    { "field": "utm_source", "operator": "equals", "value": "church_newsletter", "segment": "church", "weight": 5 }
+    { "field": "utm_source", "operator": "equals", "value": "church_newsletter", "segment": "church", "weight": 5 },
+
+    { "field": "signup_category", "operator": "contains", "value": "school", "segment": "school", "weight": 6 },
+    { "field": "signup_category", "operator": "contains", "value": "education", "segment": "school", "weight": 6 },
+    { "field": "signup_category", "operator": "contains", "value": "church", "segment": "church", "weight": 6 },
+    { "field": "signup_category", "operator": "contains", "value": "religious", "segment": "church", "weight": 6 },
+    { "field": "signup_category", "operator": "contains", "value": "sports", "segment": "sports", "weight": 6 },
+    { "field": "signup_category", "operator": "contains", "value": "recreation", "segment": "sports", "weight": 5 },
+    { "field": "signup_category", "operator": "contains", "value": "nonprofit", "segment": "nonprofit", "weight": 6 },
+    { "field": "signup_category", "operator": "contains", "value": "charity", "segment": "nonprofit", "weight": 6 },
+    { "field": "signup_category", "operator": "contains", "value": "business", "segment": "business", "weight": 6 },
+    { "field": "signup_category", "operator": "contains", "value": "corporate", "segment": "business", "weight": 6 }
   ],
 
   "templateRules": [
