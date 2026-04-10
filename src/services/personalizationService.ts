@@ -1,5 +1,5 @@
 import { DecideResponse, ExperiencePayload } from '../models/api';
-import { LifecycleStage, Segment, VALID_SEGMENTS } from '../models/visitor';
+import { LifecycleStage, Segment, VALID_SEGMENTS } from '../models/entities';
 import * as visitorRepo from '../repositories/visitorRepository';
 import * as decisionRepo from '../repositories/decisionRepository';
 import {

@@ -1,5 +1,5 @@
 import { getDb } from '../db/sqlite';
-import { PersonalizationDecision } from '../models/visitor';
+import { PersonalizationDecision } from '../models/entities';
 
 export function insertDecision(decision: PersonalizationDecision): void {
   const db = getDb();

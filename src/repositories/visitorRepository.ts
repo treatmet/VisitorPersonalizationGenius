@@ -1,5 +1,5 @@
 import { getDb } from '../db/sqlite';
-import { Visitor, VisitorSegmentWeight, Segment } from '../models/visitor';
+import { Visitor, VisitorSegmentWeight, Segment } from '../models/entities';
 
 export function findVisitorById(id: string): Visitor | undefined {
   const db = getDb();

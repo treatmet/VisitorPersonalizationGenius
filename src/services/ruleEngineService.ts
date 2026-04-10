@@ -1,6 +1,6 @@
 import config from '../config/personalization.json';
 import { PersonalizationConfig, SegmentRule, TemplateRule, TemplateContent } from '../models/rules';
-import { VALID_SEGMENTS } from '../models/visitor';
+import { VALID_SEGMENTS } from '../models/entities';
 
 const cfg = config as PersonalizationConfig;
 

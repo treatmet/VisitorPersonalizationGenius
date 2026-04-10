@@ -2,7 +2,7 @@
  * API request and response types.
  */
 
-import { LifecycleStage, Segment } from './visitor';
+import { LifecycleStage, Segment } from './entities';
 
 // ---- Capture endpoint ----
 
@@ -40,16 +40,7 @@ export interface DecideRequest {
   pageType: string;
 }
 
-export interface HeroContent {
-  headline: string;
-  subheadline: string;
-  ctaText: string;
-  ctaUrl: string;
-}
-
-export interface ThemeContent {
-  variant: string;
-}
+import { HeroContent, ThemeContent } from './rules';
 
 export interface ExperiencePayload {
   templateKey: string;

@@ -1,5 +1,5 @@
 /**
- * Database entity types for visitors and related tables.
+ * Database entity types.
  */
 
 export interface Visitor {
@@ -56,10 +56,10 @@ export interface PersonalizationDecision {
   response_json: string;
 }
 
-export type LifecycleStage = 'anonymous' | 'attendee' | 'creator' | 'paid_member';
+export const VALID_LIFECYCLE_STAGES = ['anonymous', 'attendee', 'creator', 'paid_member'] as const;
+export type LifecycleStage = typeof VALID_LIFECYCLE_STAGES[number];
 
-export type Segment = 'school' | 'church' | 'nonprofit' | 'sports' | 'business' | 'unknown';
+export const VALID_SEGMENTS = ['school', 'church', 'nonprofit', 'sports', 'business', 'unknown'] as const;
+export type Segment = typeof VALID_SEGMENTS[number];
 
-export const VALID_LIFECYCLE_STAGES: LifecycleStage[] = ['anonymous', 'attendee', 'creator', 'paid_member'];
 
-export const VALID_SEGMENTS: Segment[] = ['school', 'church', 'nonprofit', 'sports', 'business', 'unknown'];

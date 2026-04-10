@@ -1,5 +1,5 @@
 import { CaptureRequest, DecideRequest } from '../models/api';
-import { VALID_LIFECYCLE_STAGES, LifecycleStage } from '../models/visitor';
+import { VALID_LIFECYCLE_STAGES, LifecycleStage } from '../models/entities';
 
 export interface ValidationError {
   field: string;
@@ -37,6 +37,8 @@ export function validateCaptureRequest(body: unknown): { data: CaptureRequest; e
     }
   }
 
+  // We can easily add more validations here as needed such as max character lengths, allowed characters, etc.
+
   return { data: b as unknown as CaptureRequest, errors };
 }
 
@@ -52,6 +54,8 @@ export function validateDecideRequest(body: unknown): { data: DecideRequest; err
   if (!b.pageType || typeof b.pageType !== 'string') {
     errors.push({ field: 'pageType', message: 'pageType is required and must be a string' });
   }
+
+    // We can easily add more validations here as needed such as max character lengths, allowed characters, etc.
 
   return { data: b as unknown as DecideRequest, errors };
 }

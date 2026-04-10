@@ -1,5 +1,5 @@
 import { getDb } from '../db/sqlite';
-import { VisitorSignalLog } from '../models/visitor';
+import { VisitorSignalLog } from '../models/entities';
 
 export function insertSignalLog(log: VisitorSignalLog): void {
   const db = getDb();

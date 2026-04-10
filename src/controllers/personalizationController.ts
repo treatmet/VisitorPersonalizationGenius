@@ -4,7 +4,7 @@ import { isBot } from '../utils/botDetection';
 import { getVisitorIdFromCookie } from '../utils/cookies';
 import { decide } from '../services/personalizationService';
 import { getTimeoutMs, getRulesetVersion, getDefaultTemplateKey, getDefaultContent } from '../services/ruleEngineService';
-import { VALID_SEGMENTS } from '../models/visitor';
+import { VALID_SEGMENTS } from '../models/entities';
 import { logger } from '../utils/logger';
 
 export function handleDecide(req: Request, res: Response): void {
@@ -23,7 +23,7 @@ export function handleDecide(req: Request, res: Response): void {
       return;
     }
 
-    const visitorId = getVisitorIdFromCookie(req);
+    const visitorId = getVisitorIdFromCookie(req); // Get visitor ID from cookie
 
     // Wrap decision in a timeout. If it takes too long, return fallback.
     const timeoutMs = getTimeoutMs();
