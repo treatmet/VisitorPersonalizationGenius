@@ -16,3 +16,4 @@ build/
 .nyc_output/
 coverage/
 data.sqlite-shm
+data.sqlite-wal
