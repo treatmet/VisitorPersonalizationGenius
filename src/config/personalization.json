@@ -1,0 +1,148 @@
+{
+  "rulesetVersion": "v1",
+  "weightMergeFactor": 0.7,
+  "timeoutMs": 1000,
+
+  "segmentRules": [
+    { "field": "utm_campaign", "operator": "contains", "value": "school", "segment": "school", "weight": 5 },
+    { "field": "utm_campaign", "operator": "contains", "value": "church", "segment": "church", "weight": 5 },
+    { "field": "utm_campaign", "operator": "contains", "value": "nonprofit", "segment": "nonprofit", "weight": 5 },
+    { "field": "utm_campaign", "operator": "contains", "value": "sports", "segment": "sports", "weight": 5 },
+    { "field": "utm_campaign", "operator": "contains", "value": "business", "segment": "business", "weight": 5 },
+    { "field": "utm_term", "operator": "contains", "value": "school", "segment": "school", "weight": 4 },
+    { "field": "utm_term", "operator": "contains", "value": "church", "segment": "church", "weight": 4 },
+    { "field": "utm_term", "operator": "contains", "value": "volunteer", "segment": "nonprofit", "weight": 3 },
+    { "field": "utm_term", "operator": "contains", "value": "sports", "segment": "sports", "weight": 4 },
+    { "field": "path", "operator": "contains", "value": "/school", "segment": "school", "weight": 3 },
+    { "field": "path", "operator": "contains", "value": "/church", "segment": "church", "weight": 3 },
+    { "field": "path", "operator": "contains", "value": "/nonprofit", "segment": "nonprofit", "weight": 3 },
+    { "field": "path", "operator": "contains", "value": "/sports", "segment": "sports", "weight": 3 },
+    { "field": "path", "operator": "contains", "value": "/business", "segment": "business", "weight": 3 },
+    { "field": "referrer", "operator": "contains", "value": "school", "segment": "school", "weight": 2 },
+    { "field": "referrer", "operator": "contains", "value": "church", "segment": "church", "weight": 2 },
+    { "field": "utm_source", "operator": "equals", "value": "school_newsletter", "segment": "school", "weight": 5 },
+    { "field": "utm_source", "operator": "equals", "value": "church_newsletter", "segment": "church", "weight": 5 }
+  ],
+
+  "templateRules": [
+    {
+      "pageType": "homepage",
+      "lifecycleStage": ["anonymous", "attendee"],
+      "primarySegment": "school",
+      "templateKey": "homepage_school_general"
+    },
+    {
+      "pageType": "homepage",
+      "lifecycleStage": ["creator", "paid_member"],
+      "primarySegment": "school",
+      "templateKey": "homepage_school_creator"
+    },
+    {
+      "pageType": "homepage",
+      "lifecycleStage": ["anonymous", "attendee"],
+      "primarySegment": "church",
+      "templateKey": "homepage_church_general"
+    },
+    {
+      "pageType": "homepage",
+      "lifecycleStage": ["anonymous", "attendee"],
+      "primarySegment": "sports",
+      "templateKey": "homepage_sports_general"
+    },
+    {
+      "pageType": "homepage",
+      "lifecycleStage": ["anonymous", "attendee"],
+      "primarySegment": "nonprofit",
+      "templateKey": "homepage_nonprofit_general"
+    },
+    {
+      "pageType": "homepage",
+      "lifecycleStage": ["anonymous", "attendee"],
+      "primarySegment": "business",
+      "templateKey": "homepage_business_general"
+    },
+    {
+      "pageType": "homepage",
+      "lifecycleStage": ["anonymous", "attendee", "creator", "paid_member"],
+      "templateKey": "homepage_default"
+    }
+  ],
+
+  "defaultTemplateKey": "homepage_default",
+
+  "templateContent": {
+    "homepage_school_general": {
+      "hero": {
+        "headline": "Organize school events without the chaos",
+        "subheadline": "Create sign ups for conferences, volunteers, and more.",
+        "ctaText": "Create a School Sign Up",
+        "ctaUrl": "/register?template=school"
+      },
+      "theme": { "variant": "education-blue" }
+    },
+    "homepage_school_creator": {
+      "hero": {
+        "headline": "Welcome back! Ready for your next school event?",
+        "subheadline": "Pick up where you left off or start a new sign up.",
+        "ctaText": "Create Another Sign Up",
+        "ctaUrl": "/create?template=school"
+      },
+      "theme": { "variant": "education-blue" }
+    },
+    "homepage_church_general": {
+      "hero": {
+        "headline": "Coordinate your congregation effortlessly",
+        "subheadline": "Sign ups for meals, volunteers, small groups, and more.",
+        "ctaText": "Create a Church Sign Up",
+        "ctaUrl": "/register?template=church"
+      },
+      "theme": { "variant": "warm-gold" }
+    },
+    "homepage_sports_general": {
+      "hero": {
+        "headline": "Get your team organized in minutes",
+        "subheadline": "Snack schedules, carpools, practice sign ups — done.",
+        "ctaText": "Create a Sports Sign Up",
+        "ctaUrl": "/register?template=sports"
+      },
+      "theme": { "variant": "sporty-green" }
+    },
+    "homepage_nonprofit_general": {
+      "hero": {
+        "headline": "Rally your volunteers with ease",
+        "subheadline": "Create sign ups for events, fundraisers, and shifts.",
+        "ctaText": "Create a Volunteer Sign Up",
+        "ctaUrl": "/register?template=nonprofit"
+      },
+      "theme": { "variant": "caring-purple" }
+    },
+    "homepage_business_general": {
+      "hero": {
+        "headline": "Streamline workplace coordination",
+        "subheadline": "Sign ups for meetings, trainings, and team events.",
+        "ctaText": "Create a Business Sign Up",
+        "ctaUrl": "/register?template=business"
+      },
+      "theme": { "variant": "professional-gray" }
+    },
+    "homepage_default": {
+      "hero": {
+        "headline": "Plan together with sign ups that just work",
+        "subheadline": "Millions of people use SignUpGenius to simplify event planning.",
+        "ctaText": "Create a Free Sign Up",
+        "ctaUrl": "/register"
+      },
+      "theme": { "variant": "default" }
+    }
+  },
+
+  "defaultContent": {
+    "hero": {
+      "headline": "Plan together with sign ups that just work",
+      "subheadline": "Millions of people use SignUpGenius to simplify event planning.",
+      "ctaText": "Create a Free Sign Up",
+      "ctaUrl": "/register"
+    },
+    "theme": { "variant": "default" }
+  }
+}
