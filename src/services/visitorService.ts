@@ -28,11 +28,15 @@ export interface CaptureInput {
 export function captureVisitor(visitorId: string | null, input: CaptureInput): CaptureResponse {
   const now = new Date().toISOString();
 
-  // If a durable signup identity is present, trust it as the only identity input.
-  // Cookie visitorId is ignored for identity resolution in this request.
+  // If a durable signup identity is present, look up the canonical visitor by signupgeniusUserId.
+  // If a linked record exists (e.g. returning user on new device), use that and ignore the cookie.
+  // If no linked record exists (e.g. first-time account link), keep the cookie visitorId so the
+  // anonymous record gets linked to the signupgeniusUserId below rather than creating a new visitor.
   if (input.signupgeniusUserId) {
     const canonicalVisitor = visitorRepo.findVisitorBySignupGeniusUserId(input.signupgeniusUserId);
-    visitorId = canonicalVisitor ? canonicalVisitor.id : null;
+    if (canonicalVisitor) {
+      visitorId = canonicalVisitor.id;
+    }
   }
 
   // Idempotency: if we've already processed this requestId, look up visitor and return current state
