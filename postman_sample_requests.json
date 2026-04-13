@@ -1,0 +1,108 @@
+{
+  "info": {
+    "_postman_id": "bab0103b-a2ea-45c6-87ea-946b409707b1",
+    "name": "Genius",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "3200966",
+    "_collection_link": "https://go.postman.co/collection/3200966-bab0103b-a2ea-45c6-87ea-946b409707b1?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Visitor Capture",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "sg_vid=vis_a13eb8fe-4cc9-48e7-b82a-693b473ff58d",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"requestId\": \"new9\",\r\n  \"page\": {\r\n    \"path\": \"/\",\r\n    \"pageType\": \"homepage\",\r\n    \"referrer\": \"https://www.google.com/\",\r\n    \"query\": {\r\n      \"utm_source\": \"google\",\r\n      \"utm_medium\": \"cpc\",\r\n      \"utm_campaign\": \"school\",\r\n      \"utm_content\": \"hero_a\",\r\n      \"utm_term\": \"school\",\r\n      \"gclid\": \"abc123\"\r\n    }\r\n  },\r\n  \"signupgeniusUserId\": \"12345\",\r\n  \"signals\": {\r\n    \"signup_category\": \"school\"\r\n  },\r\n  \"context\": {\r\n    \"lifecycleStageHint\": \"attendee\"\r\n  }\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/v1/visitors/capture",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "v1",
+            "visitors",
+            "capture"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/health",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "health"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Personalization",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "sg_vid=vis_a13eb8fe-4cc9-48e7-b82a-693b473ff58d",
+            "type": "text"
+          },
+          {
+            "key": "",
+            "value": "",
+            "type": "text",
+            "disabled": true
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"pageType\": \"homepage\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/v1/personalization/decide",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "v1",
+            "personalization",
+            "decide"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

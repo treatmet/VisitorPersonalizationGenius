@@ -137,11 +137,10 @@ Returns `{ "status": "ok" }`.
 - On first visit (no `sg_vid` cookie), a new visitor ID is generated (e.g. `vis_<uuid>`).
 - The `sg_vid` cookie is set with the visitor ID as the value.
 - On subsequent visits, the visitor ID is read from the cookie.
-- The visitor ID **is** the cookie value — no separate anonymous_cookie_id column.
 
 ### Account Linking
 
-When a visitor creates a SignUpGenius account, the frontend sends `signupgeniusUserId` in the next capture request. This links the existing anonymous visitor record to their account — the `vis_<uuid>` stays the same, so all historical signal logs, segment weights, and personalization decisions remain attached. Once set, `signupgeniusUserId` is never overwritten by subsequent captures that omit it.
+When a visitor creates a SignUpGenius account, the frontend sends `signupgeniusUserId` in the next capture request. This links the existing anonymous visitor record to their account — the `vis_<uuid>` stays the same, so all historical signal logs, segment weights, and personalization decisions remain attached. Once set, `signupgeniusUserId` is used as the primary user identifier even across platforms/sessions.
 
 ## How Rules Work
 
@@ -151,17 +150,15 @@ The personalization engine uses a **2-step process**:
 
 Signal fields (utm_campaign, path, referrer, custom signals like signup_category, etc.) are matched against **segment rules** defined in `src/config/personalization.json`. Each matching rule contributes a weight to a segment.
 
-A given field can only trigger a segment weight **once** — if multiple rules match the same field+segment pair, only the first match (in config order) fires. Different fields can still independently contribute to the same segment.
+Custom signals sent via the `signals` field are merged into the same field map as UTM params and matched by the same rules. For example, a rule with `"field": "signup_category"` will match against the value sent in `signals.signup_category`. This allows for easy expansion of new signals and weights.
 
-Custom signals sent via the `signals` field are merged into the same field map as UTM params and matched by the same rules. For example, a rule with `"field": "signup_category"` will match against the value sent in `signals.signup_category`.
-
-Weights are merged across visits using the formula:
+Weights are merged across visits using the formula which favor newer signals over old:
 
 ```
 mergedWeight = (oldWeight × weightMergeFactor) + newWeight
 ```
 
-The `weightMergeFactor` (default: 0.7) is configurable. This means strong new signals can shift the primary segment over time, while historical signals gradually decay.
+The `weightMergeFactor` (default: 0.7) is configurable.
 
 The segment with the highest weight becomes `primarySegment`.
 
@@ -175,22 +172,6 @@ The segment with the highest weight becomes `primarySegment`.
 
 Each template key maps to content defined in the same config file.
 
-### Supported segments
-
-`school`, `church`, `nonprofit`, `sports`, `business`, `unknown`
-
-### Supported lifecycle stages
-
-`anonymous`, `attendee`, `creator`, `paid_member`
-
-## Why SQLite
-
-- Zero infrastructure for local development
-- Single-file database, no setup needed
-- Good enough for POC-scale traffic
-- Easy to inspect data with any SQLite client
-- The schema is designed to be portable to PostgreSQL later
-
 ## Running Locally
 
 Make sure node and npm are installed
@@ -202,36 +183,11 @@ npm run dev
 
 The SQLite database file (`data.sqlite`) is created automatically in the project root.
 
-**Test with curl:**
+**Testing Endpoints**
 
-```bash
-# Capture a visitor signal
-curl -X POST http://localhost:3000/v1/visitors/capture \
-  -H "Content-Type: application/json" \
-  -d '{
-    "requestId": "req_test_001",
-    "page": {
-      "path": "/",
-      "pageType": "homepage",
-      "referrer": "https://www.google.com/",
-      "query": {
-        "utm_campaign": "schools_fall_signup_drive",
-        "utm_term": "school signup sheet"
-      }
-    },
-    "signals": {
-      "signup_category": "Education & Schools"
-    }
-  }'
+Sample Postman API requests are included in the postman_sample_requests.json file in project directory.
 
-# Get personalization decision (use the sg_vid cookie from the capture response)
-curl -X POST http://localhost:3000/v1/personalization/decide \
-  -H "Content-Type: application/json" \
-  -H "Cookie: sg_vid=vis_REPLACE_WITH_ACTUAL_ID" \
-  -d '{"pageType": "homepage"}'
-```
-
-## Data Model
+## Table Structure
 
 | Table                       | Purpose                                                                                                                |
 | --------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
@@ -244,18 +200,14 @@ curl -X POST http://localhost:3000/v1/personalization/decide \
 
 The `personalization_decisions` table records every decision: what visitor state was inferred, what template was served, and whether a fallback was used. Combined with `visitor_signal_logs`, this provides a basic audit trail.
 
-**Current limitation:** Conversion measurement is limited because we are not yet storing explicit downstream product events such as `signup_started` or `paid_upgrade`. For now, lifecycle changes can only be inferred from later captures/decisions over time. A full event tracking system is intentionally deferred for the POC.
-
 ## Fallback Behavior
 
 This service is designed to sit in the critical path of page load:
 
 - If personalization fails for any reason, a **default non-personalized experience** is returned.
-- `metadata.fallbackUsed` is set to `true` in fallback responses.
-- If no visitor cookie exists on `/decide`, the default experience is returned.
+- If no visitor ID exists on `/decide`, the default experience is returned.
 - If no template rule matches, the default experience is returned.
-- The service never crashes or returns internal errors to the client from the decide endpoint.
-- `timeoutMs` is configurable in `personalization.json` (default: 1000ms).
+- If the service takes too long for any reason. `timeoutMs` is configurable in `personalization.json` (default: 1000ms).
 
 ## Bot Detection
 
@@ -263,25 +215,20 @@ A lightweight bot filter checks User-Agent substrings (googlebot, bingbot, etc.)
 
 - Are not stored in the visitors table
 - Receive an `{ "ignored": true }` response from capture
-- Receive a default fallback from decide
+- Rule engine is not run - Receive a default fallback returned by `/decide`
 
 ## Assumptions
 
 - The overarching Leadership goal: Improve conversion of new users into users who create and launch a signup.
-- The frontend is a large Angular application with segment-aware components that can render conditionally based on the `primarySegment` and `experience` payload returned by this engine. The backend does not render HTML — it provides structured data that drives frontend component selection.
-- Visitor identity starts cookie-based, but once `signupgeniusUserId` is provided, capture resolves to the canonical visitor linked to that ID and rebinds the cookie to that visitor across devices/browsers.
-- The frontend calls `/capture` on every page load (with a unique `requestId`) and `/decide` when it needs personalized content. These are separate calls because capture may happen on pages that don't need personalization, and decide may be called without new signals.
-- `lifecycleStageHint` is provided by the frontend based on its own knowledge of the user (e.g. detecting an existing auth cookie). The backend trusts this hint — it does not independently verify lifecycle stage.
+- The frontend is an Angular application that can render components conditionally based on the `primarySegment` and `experience` payload returned by this engine. The backend does not render HTML — it provides structured data that drives frontend component selection.
+- `signupgeniusUserId` can be easily provided by the frontend on every call once logged in.
+- The frontend calls `/capture` on every page load (with a unique `requestId`) and `/decide` when it needs personalized content.
 - One segment dominates at a time (`primarySegment`). The system does not blend content from multiple segments.
-- Rules are maintained by engineers editing `personalization.json` — there is no non-technical audience for rule management in the POC.
-- Bot traffic (crawlers, scrapers) should not pollute visitor data or waste personalization resources.
 
 ## Trade-offs
 
 | Decision                                  | Why                                                                                                                   | Downside                                                                                           |
 | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| **SQLite over PostgreSQL**                | Zero infrastructure, single-file DB, instant local setup. Schema is portable to Postgres later.                       | Not suitable for concurrent production traffic. No connection pooling.                             |
-| **Synchronous better-sqlite3**            | Simpler code, no async/await noise in the data layer. Fast enough for POC.                                            | Blocks the event loop on queries. Would need to switch to async driver at scale.                   |
 | **Config-driven JSON rules**              | No redeploy needed to change rules. Easy to read and version in git.                                                  | No admin UI. Manual editing is error-prone. No validation beyond startup.                          |
 | **Deterministic rule matching (not A/B)** | Simpler to reason about and debug. Every visitor with the same state gets the same experience.                        | Can't measure whether one variant converts better than another.                                    |
 | **Separate capture and decide endpoints** | Decouples signal collection from personalization. Capture can happen on pages that don't render personalized content. | Two network requests instead of one on pages that need both.                                       |
@@ -297,58 +244,16 @@ A lightweight bot filter checks User-Agent substrings (googlebot, bingbot, etc.)
 - **Multi-page-type content** — only homepage template rules and content exist in the config. The architecture supports other page types, but no rules are defined for them.
 - **subSegment** — exists as a placeholder in models and responses but is not used in any rules.
 - **Authentication / authorization** — endpoints are open. For this POC, `signupgeniusUserId` is accepted from request payload. In production, identity should come from trusted auth tokens/session claims rather than client-provided payload fields.
+- **Ceiling for segment weights** — Currently segment/category signals (sports, school, etc) will gain score indefinitely as they are encountered. Should probably limit this to 10 or so.
 
 ## What's Next
 
 If this POC were to move toward production, the priorities would be:
 
 1. **Add page-type coverage** — extend `personalization.json` with template rules and content for sign-ups, pricing, and templates pages. The architecture already supports this; only config changes are needed.
-2. **Event pipeline** — ingest downstream product events (`signup_started`, `first_signup_created`, `paid_upgrade`) to close the measurement loop and enable conversion tracking.
-3. **PostgreSQL migration** — swap SQLite for RDS PostgreSQL with connection pooling. The schema is designed to port directly.
-4. **Redis caching** — cache visitor state and recent decisions to reduce database load and improve latency on the decide path.
-5. **A/B testing framework** — add variant assignment logic so template rules can split traffic and measure relative conversion impact.
-6. **Admin UI** — build a web interface for managing segment rules, template content, and weight tuning without code changes.
-7. **Structured observability** — replace console logging with structured logs, add request-level metrics, and integrate distributed tracing.
-8. **Signal log archival** — add TTL or cold-storage archival for `visitor_signal_logs` to prevent unbounded table growth.
-
-## Project Structure
-
-```
-src/
-  server.ts              # Entry point — starts Express server
-  app.ts                 # Express app setup, middleware, route mounting
-  config/
-    personalization.json # Rules, templates, content, weights config
-    env.ts               # Environment variables
-  db/
-    sqlite.ts            # Database connection
-    migrations.ts        # Schema creation
-  routes/
-    visitorRoutes.ts     # /v1/visitors/* route definitions
-    personalizationRoutes.ts  # /v1/personalization/* route definitions
-  controllers/
-    visitorController.ts          # Capture endpoint handler
-    personalizationController.ts  # Decide endpoint handler
-  services/
-    visitorService.ts          # Visitor creation, signal processing, weight merging
-    personalizationService.ts  # Decision logic, template resolution
-    ruleEngineService.ts       # Segment rule evaluation, template matching
-  repositories/
-    visitorRepository.ts    # Visitor + segment weight DB operations
-    signalLogRepository.ts  # Signal log DB operations
-    decisionRepository.ts   # Decision audit trail DB operations
-  models/
-    entities.ts  # DB entity types, lifecycle stages, segments
-    api.ts      # Request/response types
-    rules.ts    # Rule config types
-  utils/
-    id.ts            # ID generation
-    cookies.ts       # Cookie read/write helpers
-    botDetection.ts  # User-agent bot filtering
-    validation.ts    # Input validation
-    logger.ts        # Console logger wrapper
-```
-
-## License
-
-ISC
+2. **Event pipeline** — ingest conversion events (`signup_started`, `first_signup_created`, `paid_upgrade`) to enable measurement of personalization effectiveness.
+3. **Redis caching** — cache visitor state and recent decisions to reduce database load and improve latency on the decide path.
+4. **A/B testing framework** — add variant assignment logic so template rules can split traffic and measure relative conversion impact.
+5. **Admin UI** — build a web interface for managing segment rules, template content, and weight tuning without code changes.
+6. **Structured observability** — replace console logging with structured logs, add request-level metrics, and integrate distributed tracing.
+7. **Signal log archival** — add TTL or cold-storage archival for `visitor_signal_logs` to prevent unbounded table growth.
