@@ -6,6 +6,11 @@ export function findVisitorById(id: string): Visitor | undefined {
   return db.prepare('SELECT * FROM visitors WHERE id = ?').get(id) as Visitor | undefined;
 }
 
+export function findVisitorBySignupGeniusUserId(signupgeniusUserId: string): Visitor | undefined {
+  const db = getDb();
+  return db.prepare('SELECT * FROM visitors WHERE signupgenius_user_id = ?').get(signupgeniusUserId) as Visitor | undefined;
+}
+
 export function insertVisitor(visitor: Visitor): void {
   const db = getDb();
   db.prepare(`
@@ -39,6 +44,11 @@ export function updateVisitor(
       WHERE id = ?
     `).run(fields.lifecycle_stage, fields.primary_segment, fields.sub_segment, fields.confidence, fields.last_seen_at, id);
   }
+}
+
+export function linkSignupGeniusUserId(visitorId: string, signupgeniusUserId: string): void {
+  const db = getDb();
+  db.prepare('UPDATE visitors SET signupgenius_user_id = ? WHERE id = ?').run(signupgeniusUserId, visitorId);
 }
 
 export function getSegmentWeights(visitorId: string): VisitorSegmentWeight[] {

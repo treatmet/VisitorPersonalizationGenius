@@ -1,6 +1,6 @@
 # Visitor Personalization Genius
 
-A lightweight POC backend service that personalizes what anonymous visitors see when they arrive on a site — without requiring login. Inspired by SignUpGenius.
+A lightweight POC backend service that personalizes what anonymous visitors see when they arrive on a site — without requiring login. Designed with SignUpGenius in mind.
 
 **Leadership goal:** Improve conversion of new users into users who create and launch a signup.
 
@@ -64,9 +64,10 @@ Capture visitor signals, create/reuse anonymous identity, derive segment weights
 }
 ```
 
-Also sets cookie `sg_vid=<visitorId>`.
+Also sets a cookie `sg_vid=<visitorId>` for session tracking.
 
 **Notes:**
+
 - `requestId` is required. Must be unique per page-load event (used for idempotency).
 - `page.pageType` is required. All other fields are optional.
 - `signupgeniusUserId` is optional. When provided, the visitor record is linked to a SignUpGenius account. Once set, subsequent captures without this field will not overwrite the existing link. This is how anonymous visitor data is preserved after account creation.
@@ -121,6 +122,7 @@ Resolve the visitor from cookie, evaluate rules, and return the personalized exp
 ```
 
 **Notes:**
+
 - Only `pageType` is required in the body.
 - Visitor is resolved from the `sg_vid` cookie.
 - If no visitor exists, a default (non-personalized) experience is returned with `fallbackUsed: true`.
@@ -166,6 +168,7 @@ The segment with the highest weight becomes `primarySegment`.
 ### Step 2: Choose template
 
 **Template rules** are evaluated in order — first match wins. Rules match on:
+
 - `pageType` (required)
 - `lifecycleStage` (array of stages to match)
 - `primarySegment` (optional — if omitted, matches any segment)
@@ -189,6 +192,8 @@ Each template key maps to content defined in the same config file.
 - The schema is designed to be portable to PostgreSQL later
 
 ## Running Locally
+
+Make sure node and npm are installed
 
 ```bash
 npm install
@@ -228,12 +233,12 @@ curl -X POST http://localhost:3000/v1/personalization/decide \
 
 ## Data Model
 
-| Table | Purpose |
-|-------|---------|
-| `visitors` | Current canonical state for each visitor |
-| `visitor_segment_weights` | Per-segment weight scores for each visitor |
-| `visitor_signal_logs` | Append-only log of raw captured signals (idempotent via `request_id`). Custom signals stored in `signals_json` column. |
-| `personalization_decisions` | Historical audit trail of decisions served |
+| Table                       | Purpose                                                                                                                |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `visitors`                  | Current canonical state for each visitor                                                                               |
+| `visitor_segment_weights`   | Per-segment weight scores for each visitor                                                                             |
+| `visitor_signal_logs`       | Append-only log of raw captured signals (idempotent via `request_id`). Custom signals stored in `signals_json` column. |
+| `personalization_decisions` | Historical audit trail of decisions served                                                                             |
 
 ## Explainability / Auditing
 
@@ -255,14 +260,16 @@ This service is designed to sit in the critical path of page load:
 ## Bot Detection
 
 A lightweight bot filter checks User-Agent substrings (googlebot, bingbot, etc.). Detected bots:
+
 - Are not stored in the visitors table
 - Receive an `{ "ignored": true }` response from capture
 - Receive a default fallback from decide
 
 ## Assumptions
 
+- The overarching Leadership goal: Improve conversion of new users into users who create and launch a signup.
 - The frontend is a large Angular application with segment-aware components that can render conditionally based on the `primarySegment` and `experience` payload returned by this engine. The backend does not render HTML — it provides structured data that drives frontend component selection.
-- Visitor identity is cookie-based. Cross-device persistence (e.g. a visitor switching from phone to laptop) is **not** handled in this POC. A logged-in user on a new device would start as a fresh anonymous visitor until `signupgeniusUserId` links them. This is acceptable for a POC but would need a server-side identity resolution layer in production.
+- Visitor identity starts cookie-based, but once `signupgeniusUserId` is provided, capture resolves to the canonical visitor linked to that ID and rebinds the cookie to that visitor across devices/browsers.
 - The frontend calls `/capture` on every page load (with a unique `requestId`) and `/decide` when it needs personalized content. These are separate calls because capture may happen on pages that don't need personalization, and decide may be called without new signals.
 - `lifecycleStageHint` is provided by the frontend based on its own knowledge of the user (e.g. detecting an existing auth cookie). The backend trusts this hint — it does not independently verify lifecycle stage.
 - One segment dominates at a time (`primarySegment`). The system does not blend content from multiple segments.
@@ -271,27 +278,26 @@ A lightweight bot filter checks User-Agent substrings (googlebot, bingbot, etc.)
 
 ## Trade-offs
 
-| Decision | Why | Downside |
-|----------|-----|----------|
-| **SQLite over PostgreSQL** | Zero infrastructure, single-file DB, instant local setup. Schema is portable to Postgres later. | Not suitable for concurrent production traffic. No connection pooling. |
-| **Synchronous better-sqlite3** | Simpler code, no async/await noise in the data layer. Fast enough for POC. | Blocks the event loop on queries. Would need to switch to async driver at scale. |
-| **Cookie-only identity** | Simple, works across sessions on the same browser with no infrastructure. | No cross-device persistence. Cookie can be cleared by user. |
-| **Config-driven JSON rules** | No redeploy needed to change rules. Easy to read and version in git. | No admin UI. Manual editing is error-prone. No validation beyond startup. |
-| **Deterministic rule matching (not A/B)** | Simpler to reason about and debug. Every visitor with the same state gets the same experience. | Can't measure whether one variant converts better than another. |
-| **Separate capture and decide endpoints** | Decouples signal collection from personalization. Capture can happen on pages that don't render personalized content. | Two network requests instead of one on pages that need both. |
-| **Weight decay formula** | Lets visitor segments evolve over time as new signals arrive, without losing history entirely. | Tuning `weightMergeFactor` requires experimentation. No built-in way to A/B test different values. |
-| **Append-only signal logs** | Full audit trail, idempotency via `requestId`, no data loss. | Table grows unbounded. Would need TTL/archival in production. |
+| Decision                                  | Why                                                                                                                   | Downside                                                                                           |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| **SQLite over PostgreSQL**                | Zero infrastructure, single-file DB, instant local setup. Schema is portable to Postgres later.                       | Not suitable for concurrent production traffic. No connection pooling.                             |
+| **Synchronous better-sqlite3**            | Simpler code, no async/await noise in the data layer. Fast enough for POC.                                            | Blocks the event loop on queries. Would need to switch to async driver at scale.                   |
+| **Cookie-only identity**                  | Simple, works across sessions on the same browser with no infrastructure.                                             | No cross-device persistence. Cookie can be cleared by user.                                        |
+| **Config-driven JSON rules**              | No redeploy needed to change rules. Easy to read and version in git.                                                  | No admin UI. Manual editing is error-prone. No validation beyond startup.                          |
+| **Deterministic rule matching (not A/B)** | Simpler to reason about and debug. Every visitor with the same state gets the same experience.                        | Can't measure whether one variant converts better than another.                                    |
+| **Separate capture and decide endpoints** | Decouples signal collection from personalization. Capture can happen on pages that don't render personalized content. | Two network requests instead of one on pages that need both.                                       |
+| **Weight decay formula**                  | Lets visitor segments evolve over time as new signals arrive, without losing history entirely.                        | Tuning `weightMergeFactor` requires experimentation. No built-in way to A/B test different values. |
+| **Append-only signal logs**               | Full audit trail, idempotency via `requestId`, no data loss.                                                          | Table grows unbounded. Would need TTL/archival in production.                                      |
 
 ## What's Not Built
 
 - **A/B testing / experimentation** — template selection is deterministic. There's no way to split traffic between variants and measure conversion differences.
 - **Downstream event tracking** — we can't measure `signup_started` → `paid_upgrade` conversion because we don't ingest product events. Lifecycle changes can only be inferred from later captures.
 - **Admin UI** — rules are edited directly in `personalization.json`. No web interface for non-engineers.
-- **Cross-device identity resolution** — a visitor on their phone and laptop would appear as two separate visitors until account linking via `signupgeniusUserId`.
 - **Caching** — every request hits SQLite directly. No Redis, no in-memory cache.
 - **Multi-page-type content** — only homepage template rules and content exist in the config. The architecture supports other page types, but no rules are defined for them.
 - **subSegment** — exists as a placeholder in models and responses but is not used in any rules.
-- **Authentication / authorization** — endpoints are open. This is an anonymous-visitor service with no user-facing auth layer.
+- **Authentication / authorization** — endpoints are open. For this POC, `signupgeniusUserId` is accepted from request payload. In production, identity should come from trusted auth tokens/session claims rather than client-provided payload fields.
 
 ## What's Next
 
@@ -304,8 +310,7 @@ If this POC were to move toward production, the priorities would be:
 5. **A/B testing framework** — add variant assignment logic so template rules can split traffic and measure relative conversion impact.
 6. **Admin UI** — build a web interface for managing segment rules, template content, and weight tuning without code changes.
 7. **Structured observability** — replace console logging with structured logs, add request-level metrics, and integrate distributed tracing.
-8. **Cross-device identity** — resolve anonymous visitors to a unified profile when they log in on a new device, merging signal history and segment weights.
-9. **Signal log archival** — add TTL or cold-storage archival for `visitor_signal_logs` to prevent unbounded table growth.
+8. **Signal log archival** — add TTL or cold-storage archival for `visitor_signal_logs` to prevent unbounded table growth.
 
 ## Project Structure
 

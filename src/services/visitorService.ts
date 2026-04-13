@@ -28,6 +28,13 @@ export interface CaptureInput {
 export function captureVisitor(visitorId: string | null, input: CaptureInput): CaptureResponse {
   const now = new Date().toISOString();
 
+  // If a durable signup identity is present, trust it as the only identity input.
+  // Cookie visitorId is ignored for identity resolution in this request.
+  if (input.signupgeniusUserId) {
+    const canonicalVisitor = visitorRepo.findVisitorBySignupGeniusUserId(input.signupgeniusUserId);
+    visitorId = canonicalVisitor ? canonicalVisitor.id : null;
+  }
+
   // Idempotency: if we've already processed this requestId, look up visitor and return current state
   if (signalLogRepo.signalLogExistsByRequestId(input.requestId)) {
     logger.info(`Duplicate requestId ${input.requestId}, returning existing state`);
@@ -64,6 +71,26 @@ export function captureVisitor(visitorId: string | null, input: CaptureInput): C
       last_seen_at: now,
     });
     visitor = visitorRepo.findVisitorById(visitorId)!;
+  }
+
+  if (input.signupgeniusUserId && visitor.signupgenius_user_id !== input.signupgeniusUserId) {
+    try {
+      visitorRepo.linkSignupGeniusUserId(visitor.id, input.signupgeniusUserId);
+      visitor = visitorRepo.findVisitorById(visitor.id)!;
+    } catch (err: unknown) {
+      if (!isUniqueConstraintError(err)) {
+        throw err;
+      }
+
+      // Another request may have linked this signupgeniusUserId first.
+      // Re-query and continue using the canonical visitor.
+      const canonicalVisitor = visitorRepo.findVisitorBySignupGeniusUserId(input.signupgeniusUserId);
+      if (!canonicalVisitor) {
+        throw err;
+      }
+      visitor = canonicalVisitor;
+      visitorId = canonicalVisitor.id;
+    }
   }
 
   // Log the raw signal
@@ -193,4 +220,8 @@ function buildWeightMap(merged: Record<string, number>): Record<string, number> 
     map[seg] = Math.round((merged[seg] || 0) * 100) / 100;
   }
   return map;
+}
+
+function isUniqueConstraintError(err: unknown): boolean {
+  return err instanceof Error && err.message.includes('UNIQUE constraint failed');
 }

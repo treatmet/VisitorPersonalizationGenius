@@ -68,6 +68,10 @@ export function runMigrations(): void {
       response_json TEXT NOT NULL,
       FOREIGN KEY (visitor_id) REFERENCES visitors(id)
     );
+
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_visitors_signupgenius_user_id_unique
+      ON visitors(signupgenius_user_id)
+      WHERE signupgenius_user_id IS NOT NULL;
   `);
 
   logger.info('Database migrations complete');
