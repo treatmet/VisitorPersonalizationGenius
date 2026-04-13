@@ -35,7 +35,7 @@ export function captureVisitor(visitorId: string | null, input: CaptureInput): C
   if (input.signupgeniusUserId) {
     const canonicalVisitor = visitorRepo.findVisitorBySignupGeniusUserId(input.signupgeniusUserId);
     if (canonicalVisitor) {
-      visitorId = canonicalVisitor.id;
+      visitorId = canonicalVisitor.visitor_id;
     }
   }
 
@@ -46,7 +46,7 @@ export function captureVisitor(visitorId: string | null, input: CaptureInput): C
       const existing = visitorRepo.findVisitorById(visitorId);
       if (existing) {
         const weights = visitorRepo.getSegmentWeights(visitorId);
-        return buildCaptureResponse(existing.id, existing.lifecycle_stage as LifecycleStage, existing.primary_segment as Segment, existing.sub_segment, weights);
+        return buildCaptureResponse(existing.visitor_id, existing.lifecycle_stage as LifecycleStage, existing.primary_segment as Segment, existing.sub_segment, weights);
       }
     }
     // Edge case: duplicate request but no visitor cookie — return a minimal response
@@ -65,7 +65,7 @@ export function captureVisitor(visitorId: string | null, input: CaptureInput): C
   if (!visitor) {
     isNew = true;
     visitorRepo.insertVisitor({
-      id: visitorId,
+      visitor_id: visitorId,
       signupgenius_user_id: null,
       lifecycle_stage: 'anonymous',
       primary_segment: 'unknown',
@@ -79,8 +79,8 @@ export function captureVisitor(visitorId: string | null, input: CaptureInput): C
 
   if (input.signupgeniusUserId && visitor.signupgenius_user_id !== input.signupgeniusUserId) {
     try {
-      visitorRepo.linkSignupGeniusUserId(visitor.id, input.signupgeniusUserId);
-      visitor = visitorRepo.findVisitorById(visitor.id)!;
+      visitorRepo.linkSignupGeniusUserId(visitor.visitor_id, input.signupgeniusUserId);
+      visitor = visitorRepo.findVisitorById(visitor.visitor_id)!;
     } catch (err: unknown) {
       if (!isUniqueConstraintError(err)) {
         throw err;
@@ -93,7 +93,7 @@ export function captureVisitor(visitorId: string | null, input: CaptureInput): C
         throw err;
       }
       visitor = canonicalVisitor;
-      visitorId = canonicalVisitor.id;
+      visitorId = canonicalVisitor.visitor_id;
     }
   }
 

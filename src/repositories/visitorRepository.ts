@@ -3,7 +3,7 @@ import { Visitor, VisitorSegmentWeight, Segment } from '../models/entities';
 
 export function findVisitorById(id: string): Visitor | undefined {
   const db = getDb();
-  return db.prepare('SELECT * FROM visitors WHERE id = ?').get(id) as Visitor | undefined;
+  return db.prepare('SELECT * FROM visitors WHERE visitor_id = ?').get(id) as Visitor | undefined;
 }
 
 export function findVisitorBySignupGeniusUserId(signupgeniusUserId: string): Visitor | undefined {
@@ -14,10 +14,10 @@ export function findVisitorBySignupGeniusUserId(signupgeniusUserId: string): Vis
 export function insertVisitor(visitor: Visitor): void {
   const db = getDb();
   db.prepare(`
-    INSERT INTO visitors (id, signupgenius_user_id, lifecycle_stage, primary_segment, sub_segment, confidence, first_seen_at, last_seen_at)
+    INSERT INTO visitors (visitor_id, signupgenius_user_id, lifecycle_stage, primary_segment, sub_segment, confidence, first_seen_at, last_seen_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
-    visitor.id,
+    visitor.visitor_id,
     visitor.signupgenius_user_id,
     visitor.lifecycle_stage,
     visitor.primary_segment,
@@ -36,19 +36,19 @@ export function updateVisitor(
   if (fields.signupgenius_user_id) {
     db.prepare(`
       UPDATE visitors SET signupgenius_user_id = ?, lifecycle_stage = ?, primary_segment = ?, sub_segment = ?, confidence = ?, last_seen_at = ?
-      WHERE id = ?
+      WHERE visitor_id = ?
     `).run(fields.signupgenius_user_id, fields.lifecycle_stage, fields.primary_segment, fields.sub_segment, fields.confidence, fields.last_seen_at, id);
   } else {
     db.prepare(`
       UPDATE visitors SET lifecycle_stage = ?, primary_segment = ?, sub_segment = ?, confidence = ?, last_seen_at = ?
-      WHERE id = ?
+      WHERE visitor_id = ?
     `).run(fields.lifecycle_stage, fields.primary_segment, fields.sub_segment, fields.confidence, fields.last_seen_at, id);
   }
 }
 
 export function linkSignupGeniusUserId(visitorId: string, signupgeniusUserId: string): void {
   const db = getDb();
-  db.prepare('UPDATE visitors SET signupgenius_user_id = ? WHERE id = ?').run(signupgeniusUserId, visitorId);
+  db.prepare('UPDATE visitors SET signupgenius_user_id = ? WHERE visitor_id = ?').run(signupgeniusUserId, visitorId);
 }
 
 export function getSegmentWeights(visitorId: string): VisitorSegmentWeight[] {

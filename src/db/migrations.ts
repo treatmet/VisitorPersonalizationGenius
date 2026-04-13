@@ -11,7 +11,7 @@ export function runMigrations(): void {
 
   db.exec(`
     CREATE TABLE IF NOT EXISTS visitors (
-      id TEXT PRIMARY KEY,
+      visitor_id TEXT PRIMARY KEY,
       signupgenius_user_id TEXT,
       lifecycle_stage TEXT NOT NULL DEFAULT 'anonymous',
       primary_segment TEXT NOT NULL DEFAULT 'unknown',
@@ -27,7 +27,7 @@ export function runMigrations(): void {
       weight REAL NOT NULL DEFAULT 0.0,
       last_seen_at TEXT NOT NULL,
       PRIMARY KEY (visitor_id, segment),
-      FOREIGN KEY (visitor_id) REFERENCES visitors(id)
+      FOREIGN KEY (visitor_id) REFERENCES visitors(visitor_id)
     );
 
     CREATE TABLE IF NOT EXISTS visitor_signal_logs (
@@ -50,7 +50,7 @@ export function runMigrations(): void {
       lifecycle_stage_hint TEXT,
       signals_json TEXT,
       raw_payload_json TEXT NOT NULL,
-      FOREIGN KEY (visitor_id) REFERENCES visitors(id)
+      FOREIGN KEY (visitor_id) REFERENCES visitors(visitor_id)
     );
 
     CREATE TABLE IF NOT EXISTS personalization_decisions (
@@ -66,7 +66,7 @@ export function runMigrations(): void {
       ruleset_version TEXT NOT NULL,
       fallback_used INTEGER NOT NULL DEFAULT 0,
       response_json TEXT NOT NULL,
-      FOREIGN KEY (visitor_id) REFERENCES visitors(id)
+      FOREIGN KEY (visitor_id) REFERENCES visitors(visitor_id)
     );
 
     CREATE UNIQUE INDEX IF NOT EXISTS idx_visitors_signupgenius_user_id_unique

@@ -3,7 +3,7 @@
  */
 
 export interface Visitor {
-  id: string;
+  visitor_id: string;
   signupgenius_user_id: string | null;
   lifecycle_stage: LifecycleStage;
   primary_segment: Segment;
